@@ -1,0 +1,20 @@
+---
+networks:
+  kafka-local:
+    external: true
+services:
+  consumer:
+    container_name: consumer
+    entrypoint:
+      - ./run.sh
+    environment:
+      - KAFKA_BROKERS=kafka:9092
+      - KAFKA_TOPIC=test
+    hostname: consumer
+    image: confluentinc/cp-kafkacat:7.0.1
+    networks:
+      - kafka-local
+    volumes:
+      - ./scripts:/scripts
+    working_dir: /scripts
+version: '3.9'
