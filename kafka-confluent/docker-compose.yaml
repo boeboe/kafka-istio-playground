@@ -1,0 +1,109 @@
+---
+networks:
+  local-network:
+    name: kafka-tetrate.io
+services:
+  k3s-agent:
+    container_name: k3s-agent
+    depends_on:
+      - k3s-server
+    environment:
+      - K3S_URL=https://k3s-server:6443
+      - K3S_TOKEN=ccb18c28-ac5a-11ec-b909-0242ac120002
+    hostname: k3s-agent
+    image: rancher/k3s:latest
+    networks:
+      - local-network
+    privileged: true
+    restart: always
+    tmpfs:
+      - /run
+      - /var/run
+    ulimits:
+      nofile:
+        hard: 65535
+        soft: 65535
+      nproc: 65535
+  k3s-server:
+    command: server --disable traefik,metrics-server
+    container_name: k3s-server
+    environment:
+      - K3S_TOKEN=ccb18c28-ac5a-11ec-b909-0242ac120002
+      - K3S_KUBECONFIG_OUTPUT=/output/kubeconfig.yaml
+      - K3S_KUBECONFIG_MODE=666
+    hostname: k3s-server
+    image: rancher/k3s:latest
+    networks:
+      - local-network
+    ports:
+      - '6443:6443'
+      - '80:80'
+      - '443:443'
+    privileged: true
+    restart: always
+    tmpfs:
+      - /run
+      - /var/run
+    ulimits:
+      nofile:
+        hard: 65535
+        soft: 65535
+      nproc: 65535
+    volumes:
+      - k3s-server:/var/lib/rancher/k3s
+      - ./output:/output
+  kafdrop:
+    container_name: kafdrop
+    depends_on:
+      - zookeeper
+      - kafka
+    environment:
+      JVM_OPTS: '-Xms32M -Xmx64M'
+      KAFKA_BROKERCONNECT: kafka:9092
+      SERVER_PORT: 9000
+      SERVER_SERVLET_CONTEXTPATH: /
+    hostname: kafdrop
+    image: obsidiandynamics/kafdrop:latest
+    networks:
+      - local-network
+    ports:
+      - '9000:9000'
+    restart: always
+  kafka:
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_BROKER_ID: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_LOG4J_LOGGERS: kafka.controller=INFO,org.apache.kafka=INFO
+      KAFKA_LOG4J_ROOT_LOGLEVEL: INFO
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_SECURITY_INTER_BROKER_PROTOCOL: PLAINTEXT
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+    hostname: kafka
+    image: confluentinc/cp-kafka:7.0.1
+    networks:
+      - local-network
+    ports:
+      - '9092:9092'
+      - '9093:9093'
+    restart: always
+  zookeeper:
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    hostname: zookeeper
+    image: confluentinc/cp-zookeeper:7.0.1
+    networks:
+      - local-network
+    ports:
+      - '2181:2181'
+    restart: always
+version: '3.9'
+volumes:
+  k3s-server:
+    name: k3s-server

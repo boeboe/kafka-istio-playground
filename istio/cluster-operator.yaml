@@ -1,0 +1,74 @@
+
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+metadata:
+  name: istiocontrolplane
+  namespace: istio-system
+spec:
+  components:
+    egressGateways:
+      - enabled: true
+        k8s:
+          affinity:
+            podAntiAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchExpressions:
+                      - key: app
+                        operator: In
+                        values:
+                          - istio-egressgateway
+                  topologyKey: kubernetes.io/hostname
+          hpaSpec:
+            maxReplicas: 1
+            minReplicas: 1
+        name: istio-egressgateway
+    ingressGateways:
+      - enabled: true
+        k8s:
+          affinity:
+            podAntiAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchExpressions:
+                      - key: app
+                        operator: In
+                        values:
+                          - istio-ingressgateway
+                  topologyKey: kubernetes.io/hostname
+          hpaSpec:
+            maxReplicas: 1
+            minReplicas: 1
+          service:
+            type: LoadBalancer
+        name: istio-ingressgateway
+    pilot:
+      enabled: true
+      k8s:
+        affinity:
+          podAntiAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              - labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - istiod
+                topologyKey: kubernetes.io/hostname
+        hpaSpec:
+          maxReplicas: 1
+          minReplicas: 1
+  meshConfig:
+    accessLogFile: /dev/stdout
+    defaultConfig:
+      proxyMetadata:
+        ISTIO_META_DNS_AUTO_ALLOCATE: 'true'
+        ISTIO_META_DNS_CAPTURE: 'true'
+    trustDomain: istio-kafka
+  profile: default
+  values:
+    global:
+      meshID: mesh1
+      multiCluster:
+        clusterName: istio-cluster
+      network: ''
