@@ -1,0 +1,5 @@
+client/
+k3s-istio/
+kafka/
+wildcard/
+root*

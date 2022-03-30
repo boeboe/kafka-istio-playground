@@ -33,3 +33,5 @@ install-istio-certs:
 install-istio: install-istio-certs ## Install istio
 	${KAFKA_FLAVOUR}/setup.sh install-istio
 
+install-kafka-consumer-producer: ## Install kafka consumer and producer
+	${KAFKA_FLAVOUR}/setup.sh install-kafka-consumer-producer

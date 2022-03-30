@@ -1,0 +1,61 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kafka-consumer
+  namespace: kafka-consumer
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-consumer
+  namespace: kafka-consumer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka-consumer
+  template:
+    metadata:
+      labels:
+        app: kafka-consumer
+    spec:
+      containers:
+        - command:
+            - /scripts/run.sh
+          env:
+            - name: KAFKA_BROKERS
+              value: kafka:9092
+            - name: KAFKA_TOPIC
+              value: test
+          image: confluentinc/cp-kafkacat:7.0.1
+          imagePullPolicy: IfNotPresent
+          name: kafka-consumer
+          resources:
+            limits:
+              cpu: 250m
+              memory: 128Mi
+          volumeMounts:
+            - mountPath: /scripts
+              name: run-script
+      serviceAccountName: kafka-consumer
+      terminationGracePeriodSeconds: 0
+      volumes:
+        - configMap:
+            defaultMode: 0744
+            name: run-script
+          name: run-script
+---
+apiVersion: v1
+data:
+  run.sh: |
+    #!/usr/bin/env bash
+    echo "kafkacat -C -b ${KAFKA_BROKERS} -t ${KAFKA_TOPIC} -o -1 -c 1 -e -K:"
+    while true ; do 
+      kafkacat -C -b ${KAFKA_BROKERS} -t ${KAFKA_TOPIC} -o -1 -c 1 -e -J
+      sleep 1
+    done
+kind: ConfigMap
+metadata:
+  name: run-script
+  namespace: kafka-consumer

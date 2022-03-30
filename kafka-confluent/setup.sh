@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -o xtrace
+# set -o xtrace
 
 export BASE_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && cd .. && pwd )
 source ${BASE_DIR}/environment.sh
@@ -42,15 +42,24 @@ if [[ $1 = "install-istio-certs" ]]; then
 fi
 
 if [[ $1 = "install-istio" ]]; then
-  print_info "Switching to istio ${ISTIO_VERSION}, flavor ${ISTIO_FLAVOR}"
-  getmesh switch ${ISTIO_VERSION} --flavor ${ISTIO_FLAVOR}
-
   print_info "Install istio in k3s cluster"
   istioctl install -y --set profile=default -f${ISTIO_CONF_DIR}/cluster-operator.yaml
 
   k wait --timeout=5m --for=condition=Ready pods --all -n istio-system
 
   print_info "Istio installed"
+  exit 0
+fi
+
+if [[ $1 = "install-kafka-consumer-producer" ]]; then
+  k apply -f ${ISTIO_CONF_DIR}/namespaces.yaml
+  k apply -f ${ISTIO_CONF_DIR}/kafka-consumer.yaml
+  k apply -f ${ISTIO_CONF_DIR}/kafka-producer.yaml
+
+  k wait --timeout=5m --for=condition=Ready pods --all -n kafka-consumer
+  k wait --timeout=5m --for=condition=Ready pods --all -n kafka-producer
+
+  print_info "Kafka consumer and producer installed"
   exit 0
 fi
 
