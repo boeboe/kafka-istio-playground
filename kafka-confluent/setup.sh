@@ -50,6 +50,11 @@ data:
     $(docker inspect -f "{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}" kafka) kafka
     $(docker inspect -f "{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}" zookeeper) zookeeper
     $(docker inspect -f "{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}" kafdrop) kafdrop
+    $(docker inspect -f "{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}" k3s-server) k3s-server.kafka-tetrate.io
+    $(docker inspect -f "{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}" k3s-agent) k3s-agent.kafka-tetrate.io
+    $(docker inspect -f "{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}" kafka) kafka.kafka-tetrate.io
+    $(docker inspect -f "{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}" zookeeper) zookeeper.kafka-tetrate.io
+    $(docker inspect -f "{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}" kafdrop) kafdrop.kafka-tetrate.io
 EOF
 
   k patch configmap/coredns --patch-file ${BASE_DIR}/kafka-confluent/output/coredns-patch.yaml -n kube-system 
