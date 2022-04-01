@@ -1,0 +1,43 @@
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  labels:
+    app: network-multitool
+    tier: node
+  name: network-multitool
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: network-multitool
+      tier: node
+  template:
+    metadata:
+      labels:
+        app: network-multitool
+        tier: node
+    spec:
+      containers:
+        - env:
+            - name: HTTP_PORT
+              value: '1180'
+            - name: HTTPS_PORT
+              value: '11443'
+          image: praqma/network-multitool
+          name: network-multitool
+          ports:
+            - containerPort: 1180
+              name: http-port
+            - containerPort: 11443
+              name: https-port
+          resources:
+            limits:
+              cpu: 10m
+              memory: 20Mi
+            requests:
+              cpu: 1m
+              memory: 20Mi
+      tolerations:
+        - effect: NoSchedule
+          operator: Exists

@@ -3,3 +3,13 @@ k3s-istio/
 kafka/
 wildcard/
 root*
+
+
+kubectl patch configmap/coredns \
+  -n kube-system \
+  --type merge \
+  -p '{"data":{"NodeHosts":"|\n192.168.112.3 kafka\n192.168.112.2 zookeeper\n192.168.112.5 kafdrop"}}'
+
+192.168.112.3 kafka
+192.168.112.2 zookeeper
+192.168.112.5 kafdrop

@@ -41,6 +41,23 @@ if [[ $1 = "install-istio-certs" ]]; then
   exit 0
 fi
 
+if [[ $1 = "patch-coredns" ]]; then
+cat <<EOF | tee ${BASE_DIR}/kafka-confluent/output/coredns-patch.yaml
+data:
+  NodeHosts: |
+    $(docker inspect -f "{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}" k3s-server) k3s-server
+    $(docker inspect -f "{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}" k3s-agent) k3s-agent
+    $(docker inspect -f "{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}" kafka) kafka
+    $(docker inspect -f "{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}" zookeeper) zookeeper
+    $(docker inspect -f "{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}" kafdrop) kafdrop
+EOF
+
+  k patch configmap/coredns --patch-file ${BASE_DIR}/kafka-confluent/output/coredns-patch.yaml -n kube-system 
+  k delete pod $(k get pod -n kube-system -l k8s-app=kube-dns -o jsonpath='{.items[0].metadata.name}') -n kube-system 
+  print_info "Coredns configmap patched and coredns pod restarted"
+  exit 0
+fi
+
 if [[ $1 = "install-istio" ]]; then
   print_info "Install istio in k3s cluster"
   istioctl install -y --set profile=default -f${ISTIO_CONF_DIR}/cluster-operator.yaml
@@ -60,6 +77,15 @@ if [[ $1 = "install-kafka-consumer-producer" ]]; then
   k wait --timeout=5m --for=condition=Ready pods --all -n kafka-producer
 
   print_info "Kafka consumer and producer installed"
+  exit 0
+fi
+
+if [[ $1 = "install-network-multitool" ]]; then
+  k apply -f ${ISTIO_CONF_DIR}/network-multitool.yaml
+
+  k wait --timeout=5m --for=condition=Ready pods --all -n default
+
+  print_info "Network multitool installed"
   exit 0
 fi
 

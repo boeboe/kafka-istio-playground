@@ -30,8 +30,14 @@ setup-down: ## Stop local setup
 install-istio-certs:
 	${KAFKA_FLAVOUR}/setup.sh install-istio-certs
 
-install-istio: install-istio-certs ## Install istio
+patch-coredns:
+	${KAFKA_FLAVOUR}/setup.sh patch-coredns
+
+install-istio: install-istio-certs patch-coredns ## Install istio
 	${KAFKA_FLAVOUR}/setup.sh install-istio
 
 install-kafka-consumer-producer: ## Install kafka consumer and producer
 	${KAFKA_FLAVOUR}/setup.sh install-kafka-consumer-producer
+
+install-network-multitool: ## Install network multitool
+	${KAFKA_FLAVOUR}/setup.sh install-network-multitool
